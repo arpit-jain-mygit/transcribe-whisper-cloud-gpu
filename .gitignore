@@ -25,3 +25,4 @@ outputs/
 
 # OS
 .DS_Store
+/outputs.tar.gz
