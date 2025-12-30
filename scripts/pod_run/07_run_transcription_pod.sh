@@ -1,24 +1,41 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-ts() {
-  date +"%Y-%m-%d %H:%M:%S"
-}
+# ============================================================
+# TIMESTAMP
+# ============================================================
+ts() { date +"%Y-%m-%d %H:%M:%S"; }
+
+# ============================================================
+# RESOLVE PATHS (ROBUST)
+# This script lives in: scripts/pod_run/
+# Project root = ../..
+# ============================================================
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+SRC_DIR="$PROJECT_ROOT/src"
+POD_SCRIPTS_DIR="$PROJECT_ROOT/scripts/pod_run"
+
+SEGMENT_SCRIPT="$SRC_DIR/01_segment_audio.py"
+TRANSCRIBE_SCRIPT="$SRC_DIR/02_transcribe_clips.py"
+POSTPROCESS_SCRIPT="$SRC_DIR/03_postprocess_rules.py"
+COMPRESS_SCRIPT="$POD_SCRIPTS_DIR/08_compress_output_pod.sh"
 
 echo "============================================================"
 echo "🎙️ Whisper Transcription Pipeline"
-echo "Started at: $(ts)"
-echo "Working dir: $(pwd)"
+echo "Started at : $(ts)"
+echo "Project    : $PROJECT_ROOT"
 echo "============================================================"
 
 # ------------------------------------------------------------
 # STEP 1 — SEGMENTATION
 # ------------------------------------------------------------
 echo ""
-echo "[$(ts)] ▶ STEP 1/3: Audio segmentation started"
+echo "[$(ts)] ▶ STEP 1/4: Audio segmentation started"
 START=$(date +%s)
 
-python 01_segment_audio.py
+python "$SEGMENT_SCRIPT"
 
 END=$(date +%s)
 echo "[$(ts)] ✅ STEP 1 completed in $((END - START)) sec"
@@ -27,10 +44,10 @@ echo "[$(ts)] ✅ STEP 1 completed in $((END - START)) sec"
 # STEP 2 — TRANSCRIPTION
 # ------------------------------------------------------------
 echo ""
-echo "[$(ts)] ▶ STEP 2/3: Transcription started (this can take time)"
+echo "[$(ts)] ▶ STEP 2/4: Transcription started (this can take time)"
 START=$(date +%s)
 
-python 02_transcribe_clips.py
+python "$TRANSCRIBE_SCRIPT"
 
 END=$(date +%s)
 echo "[$(ts)] ✅ STEP 2 completed in $((END - START)) sec"
@@ -39,10 +56,10 @@ echo "[$(ts)] ✅ STEP 2 completed in $((END - START)) sec"
 # STEP 3 — POST-PROCESSING
 # ------------------------------------------------------------
 echo ""
-echo "[$(ts)] ▶ STEP 3/3: Rule-based post-processing started"
+echo "[$(ts)] ▶ STEP 3/4: Rule-based post-processing started"
 START=$(date +%s)
 
-python 03_postprocess_rules.py
+python "$POSTPROCESS_SCRIPT"
 
 END=$(date +%s)
 echo "[$(ts)] ✅ STEP 3 completed in $((END - START)) sec"
@@ -54,8 +71,8 @@ echo ""
 echo "[$(ts)] ▶ STEP 4/4: Compressing outputs"
 START=$(date +%s)
 
-chmod +x compress_output.sh
-./compress_output.sh
+chmod +x "$COMPRESS_SCRIPT"
+"$COMPRESS_SCRIPT"
 
 END=$(date +%s)
 echo "[$(ts)] ✅ STEP 4 completed in $((END - START)) sec"
@@ -67,7 +84,7 @@ echo "[$(ts)] 📦 outputs.tar.gz created"
 echo ""
 echo "============================================================"
 echo "✅ PIPELINE COMPLETE"
-echo "Finished at: $(ts)"
+echo "Finished at : $(ts)"
 echo ""
 echo "📁 outputs/"
 echo "   - raw_transcript.json"

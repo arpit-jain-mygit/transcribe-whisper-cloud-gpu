@@ -4,7 +4,7 @@ set -euo pipefail
 # -------------------------------
 # Load pod configuration
 # -------------------------------
-ENV_FILE="pod.env"
+ENV_FILE="./config/pod.env"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "❌ pod.env not found"

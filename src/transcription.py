@@ -25,9 +25,9 @@ from faster_whisper import WhisperModel
 
 
 # ================= CONFIG =================
-INPUT_FILE = "215.wav"
-OUTPUT_DIR = "clips"
-STATE_FILE = "pipeline_state.json"
+INPUT_FILE = "../audio/215.wav"
+OUTPUT_DIR = "../clips"
+STATE_FILE = "../pipeline_state.json"
 
 # Smart segmentation
 MAX_CLIP_MS = 30_000
@@ -123,7 +123,7 @@ def bundle_outputs(bundle_name="outputs_bundle.tar.gz"):
     with tarfile.open(bundle_name, "w:gz") as tar:
         if os.path.exists("pipeline.log"):
             tar.add("pipeline.log")
-        for f in os.listdir("."):
+        for f in os.listdir(".."):
             if f.startswith("hindi_pipeline_") and f.endswith(".txt"):
                 tar.add(f)
 

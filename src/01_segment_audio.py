@@ -13,12 +13,18 @@ import json
 import logging
 
 # ------------------------------------------------------------
+# PATH RESOLUTION (ROBUST)
+# ------------------------------------------------------------
+# src/01_segment_audio.py → project root
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+INPUT = PROJECT_ROOT / "audio" / "215.wav"
+OUT_DIR = PROJECT_ROOT / "clips"
+STATE = PROJECT_ROOT / "pipeline_state.json"
+
+# ------------------------------------------------------------
 # CONFIG
 # ------------------------------------------------------------
-INPUT = "215.wav"
-OUT_DIR = Path("clips")
-STATE = Path("pipeline_state.json")
-
 MAX_MS = 30_000
 MIN_CLIP_MS = 12_000
 MIN_SILENCE = 600
@@ -35,6 +41,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ------------------------------------------------------------
+# VALIDATION
+# ------------------------------------------------------------
+if not INPUT.exists():
+    raise FileNotFoundError(f"Input audio not found: {INPUT}")
+
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+logger.info(f"🎧 Using input audio → {INPUT}")
+logger.info(f"📁 Clips output dir → {OUT_DIR}")
+logger.info(f"📄 State file → {STATE}")
+
+# ------------------------------------------------------------
 # LOAD AUDIO
 # ------------------------------------------------------------
 logger.info("🎧 Loading input audio")
@@ -45,8 +63,6 @@ logger.info(
     f"🎧 Audio duration: {total_ms/1000:.1f}s "
     f"({total_ms/60000:.1f} min)"
 )
-
-OUT_DIR.mkdir(exist_ok=True)
 
 clips = []
 cursor = 0
@@ -83,7 +99,7 @@ while cursor < total_ms:
     clip.export(fname, format="wav")
 
     clips.append({
-        "file": str(fname),
+        "file": str(fname.relative_to(PROJECT_ROOT)),
         "start_ms": cursor,
         "duration_ms": len(clip)
     })
@@ -98,10 +114,10 @@ while cursor < total_ms:
     clip_idx += 1
 
 # ------------------------------------------------------------
-# WRITE PIPELINE STATE (CRITICAL FIX)
+# WRITE PIPELINE STATE
 # ------------------------------------------------------------
 state = {
-    "input_audio": INPUT,
+    "input_audio": str(INPUT.relative_to(PROJECT_ROOT)),
     "total_duration_ms": total_ms,
     "total_clips": len(clips),
     "clips": clips,

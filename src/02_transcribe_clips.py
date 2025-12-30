@@ -12,15 +12,19 @@ import math
 import pickle
 import time
 import logging
+from pathlib import Path
 from faster_whisper import WhisperModel
 
 # ------------------------------------------------------------
-# CONFIG
+# PATH RESOLUTION (ROBUST)
+# src/02_transcribe_clips.py → project root
 # ------------------------------------------------------------
-OUTPUT_DIR = "outputs"
-STATE_FILE = "pipeline_state.json"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+OUTPUT_DIR = PROJECT_ROOT / "outputs"
+STATE_FILE = PROJECT_ROOT / "pipeline_state.json"
+
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # ------------------------------------------------------------
 # LOGGING
@@ -50,6 +54,15 @@ def compute_confidence(avg_logprob, no_speech_prob):
 
 
 # ------------------------------------------------------------
+# VALIDATION
+# ------------------------------------------------------------
+if not STATE_FILE.exists():
+    raise FileNotFoundError(f"pipeline_state.json not found: {STATE_FILE}")
+
+logger.info(f"📄 State file  → {STATE_FILE}")
+logger.info(f"📁 Output dir → {OUTPUT_DIR}")
+
+# ------------------------------------------------------------
 # LOAD MODEL
 # ------------------------------------------------------------
 logger.info("=" * 80)
@@ -68,7 +81,7 @@ logger.info("=" * 80)
 # ------------------------------------------------------------
 # LOAD STATE
 # ------------------------------------------------------------
-with open(STATE_FILE) as f:
+with STATE_FILE.open() as f:
     state = json.load(f)
 
 clips = state["clips"]
@@ -90,14 +103,14 @@ for idx, clip in enumerate(clips):
         logger.info(f"⏭️  Skipping clip {idx+1}/{len(clips)} (cached)")
         continue
 
-    clip_path = clip["file"]
+    clip_path = PROJECT_ROOT / clip["file"]
     start_offset = clip["start_ms"] / 1000
-    cache_file = clip_path + ".cache.pkl"
+    cache_file = clip_path.with_suffix(clip_path.suffix + ".cache.pkl")
 
     logger.info("-" * 80)
     logger.info(
         f"▶ Clip {idx+1}/{len(clips)} | "
-        f"{os.path.basename(clip_path)} | "
+        f"{clip_path.name} | "
         f"start={start_offset:.1f}s | "
         f"dur={clip['duration_ms']/1000:.1f}s"
     )
@@ -106,7 +119,7 @@ for idx, clip in enumerate(clips):
     logger.info("   🧠 GPU inference started")
 
     segments, info = model.transcribe(
-        clip_path,
+        str(clip_path),
         language="hi",
         beam_size=5
     )
@@ -120,11 +133,11 @@ for idx, clip in enumerate(clips):
     )
 
     # Cache raw segments
-    with open(cache_file, "wb") as f:
+    with cache_file.open("wb") as f:
         pickle.dump(segments, f)
     logger.info("   💾 Cached raw segments")
 
-    for s_idx, seg in enumerate(segments):
+    for seg in segments:
         conf = compute_confidence(
             seg.avg_logprob,
             seg.no_speech_prob
@@ -137,16 +150,10 @@ for idx, clip in enumerate(clips):
             "confidence": round(conf, 4)
         })
 
-        logger.debug(
-            f"      [{s_idx+1}] "
-            f"{seg.start:.2f}-{seg.end:.2f} | "
-            f"conf={conf:.3f}"
-        )
-
     processed.add(idx)
     state["clips_processed"] = sorted(processed)
 
-    with open(STATE_FILE, "w") as f:
+    with STATE_FILE.open("w") as f:
         json.dump(state, f, indent=2)
 
     logger.info(
@@ -170,8 +177,8 @@ raw_output = {
     "segments": all_segments
 }
 
-out_path = f"{OUTPUT_DIR}/raw_transcript.json"
-with open(out_path, "w", encoding="utf-8") as f:
+out_path = OUTPUT_DIR / "raw_transcript.json"
+with out_path.open("w", encoding="utf-8") as f:
     json.dump(raw_output, f, ensure_ascii=False, indent=2)
 
 logger.info(f"📄 Saved: {out_path}")
