@@ -1,0 +1,55 @@
+bash -c '
+set -e
+
+cat << "EOF" > /workspace/startup.sh
+#!/usr/bin/env bash
+set -e
+
+LOG="/workspace/startup.log"
+exec > >(tee -a "$LOG") 2>&1
+
+echo "============================================================"
+echo "🚀 RunPod Bootstrap Starting"
+echo "============================================================"
+
+# ---------------- SYSTEM ----------------
+apt-get update -y
+apt-get install -y \
+  openssh-server \
+  ffmpeg \
+  ca-certificates \
+  libglib2.0-0 \
+  libgl1 \
+  curl \
+  git \
+  python3 \
+  python3-pip \
+  python3-venv
+
+# Make python -> python3
+ln -sf /usr/bin/python3 /usr/bin/python
+
+# ---------------- SSH ----------------
+mkdir -p /root/.ssh
+chmod 700 /root/.ssh
+touch /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKGNu1YN1FEKOsgHeb6t0uwEiN0igFlBYZM//CBVdvpp sachin.arpit@gmail.com" >> /root/.ssh/authorized_keys
+
+sed -i "s/#PasswordAuthentication yes/PasswordAuthentication no/" /etc/ssh/sshd_config
+sed -i "s/PasswordAuthentication yes/PasswordAuthentication no/" /etc/ssh/sshd_config
+sed -i "s/#PubkeyAuthentication yes/PubkeyAuthentication yes/" /etc/ssh/sshd_config
+
+service ssh restart
+
+echo "============================================================"
+echo "✅ Bootstrap complete"
+echo "============================================================"
+
+tail -f /dev/null
+EOF
+
+chmod +x /workspace/startup.sh
+bash /workspace/startup.sh
+'

@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# PyCharm
+.idea/
+
+# Logs
+*.log
+
+# Audio / Data (adjust if needed)
+outputs/
+clips/
+audio/
+
+*.wav
+*.mp3
+*.flac
+data/
+outputs/
+
+# OS
+.DS_Store
