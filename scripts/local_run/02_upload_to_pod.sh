@@ -45,7 +45,7 @@ source "$ENV_FILE"
 # ============================================================
 # VALIDATION
 # ============================================================
-for var in POD_HOST POD_PORT POD_USER SSH_KEY REMOTE_DIR; do
+for var in POD_HOST POD_PORT POD_USER SSH_KEY REMOTE_WORKDIR; do
   if [[ -z "${!var:-}" ]]; then
     echo "❌ $var not set in pod.env"
     exit 1
@@ -85,17 +85,17 @@ tar \
 echo "✅ [$(ts)] Archive created"
 
 # ============================================================
-# UPLOAD (LOGGED)
+# UPLOAD (LOGGED)  🔧 PATCH HERE
 # ============================================================
 echo "============================================================"
 echo "📤 [$(ts)] Uploading to RunPod"
 echo "Host : $POD_HOST"
 echo "Port : $POD_PORT"
 echo "User : $POD_USER"
-echo "Dest : $REMOTE_DIR"
+echo "Dest : $REMOTE_WORKDIR"
 echo "============================================================"
 
-SCP_CMD="scp -i \"$SSH_KEY_EXPANDED\" -P \"$POD_PORT\" \"$ARCHIVE_PATH\" \"$POD_USER@$POD_HOST:$REMOTE_DIR/\""
+SCP_CMD="scp -i \"$SSH_KEY_EXPANDED\" -P \"$POD_PORT\" \"$ARCHIVE_PATH\" \"$POD_USER@$POD_HOST:$REMOTE_WORKDIR/\""
 
 echo "🔍 [$(ts)] Executing SCP command:"
 echo "    $SCP_CMD"
@@ -112,7 +112,7 @@ echo "============================================================"
 echo ""
 echo "🚀 NEXT STEPS (inside pod):"
 echo "------------------------------------------------------------"
-echo "cd $REMOTE_DIR"
+echo "cd $REMOTE_WORKDIR"
 echo "chmod +x scripts/pod_run/*.sh"
 echo "./scripts/pod_run/03_untar_pod_project.sh"
 echo "./scripts/pod_run/04_make_executable_pod.sh"

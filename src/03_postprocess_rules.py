@@ -12,13 +12,20 @@ import difflib
 import logging
 import time
 from collections import Counter
+from pathlib import Path
 
 # ------------------------------------------------------------
-# CONFIG
+# PATH RESOLUTION (ROBUST)
+# src/03_postprocess_rules.py → project root
 # ------------------------------------------------------------
-INPUT_FILE = "outputs/raw_transcript.json"
-OUTPUT_REFINED = "outputs/refined_transcript.json"
-OUTPUT_DIFF = "outputs/raw_vs_refined.diff.txt"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+INPUT_FILE = PROJECT_ROOT / "outputs" / "raw_transcript.json"
+OUTPUT_REFINED = PROJECT_ROOT / "outputs" / "refined_transcript.json"
+OUTPUT_DIFF = PROJECT_ROOT / "outputs" / "raw_vs_refined.diff.txt"
+
+# Ensure outputs directory exists
+OUTPUT_REFINED.parent.mkdir(parents=True, exist_ok=True)
 
 # ------------------------------------------------------------
 # LOGGING
@@ -45,7 +52,6 @@ REPLACEMENTS = {
 # HELPERS
 # ------------------------------------------------------------
 def apply_rules(text: str, stats: Counter) -> str:
-    original = text
     for wrong, right in REPLACEMENTS.items():
         if wrong in text:
             count = text.count(wrong)
@@ -66,11 +72,17 @@ logger.info(f"📄 Output : {OUTPUT_REFINED}")
 logger.info("=" * 80)
 
 # ------------------------------------------------------------
+# VALIDATION
+# ------------------------------------------------------------
+if not INPUT_FILE.exists():
+    raise FileNotFoundError(f"Raw transcript not found: {INPUT_FILE}")
+
+# ------------------------------------------------------------
 # LOAD RAW TRANSCRIPT
 # ------------------------------------------------------------
 logger.info("📂 Loading raw transcript...")
 
-with open(INPUT_FILE, encoding="utf-8") as f:
+with INPUT_FILE.open(encoding="utf-8") as f:
     raw = json.load(f)
 
 segments = raw["segments"]
@@ -120,7 +132,7 @@ diff = list(
     )
 )
 
-with open(OUTPUT_DIFF, "w", encoding="utf-8") as f:
+with OUTPUT_DIFF.open("w", encoding="utf-8") as f:
     f.write("\n".join(diff))
 
 logger.info(
@@ -139,7 +151,7 @@ refined_out = {
     "segments": segments,
 }
 
-with open(OUTPUT_REFINED, "w", encoding="utf-8") as f:
+with OUTPUT_REFINED.open("w", encoding="utf-8") as f:
     json.dump(refined_out, f, ensure_ascii=False, indent=2)
 
 # ------------------------------------------------------------
