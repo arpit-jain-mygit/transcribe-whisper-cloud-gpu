@@ -20,23 +20,23 @@ source "$ENV_FILE"
 : "${POD_USER:?Missing POD_USER}"
 : "${POD_HOST:?Missing POD_HOST}"
 : "${POD_PORT:?Missing POD_PORT}"
-: "${POD_KEY:?Missing POD_KEY}"
-: "${REMOTE_PATH:?Missing REMOTE_PATH}"
+: "${SSH_KEY:?Missing POD_KEY}"
+: "${REMOTE_DIR:?Missing REMOTE_DIR}"
 : "${LOCAL_PATH:?Missing LOCAL_PATH}"
 
 # Expand ~ in key path
-POD_KEY_EXPANDED=$(eval echo "$POD_KEY")
+SSH_KEY_EXPANDED=$(eval echo "$SSH_KEY")
 
 # -------------------------------
 # Download
 # -------------------------------
 echo "📥 Downloading from pod..."
-echo "➡ ${POD_USER}@${POD_HOST}:${REMOTE_PATH}"
+echo "➡ ${POD_USER}@${POD_HOST}:${REMOTE_DIR}"
 
 scp \
-  -i "$POD_KEY_EXPANDED" \
+  -i "$SSH_KEY_EXPANDED" \
   -P "$POD_PORT" \
-  "${POD_USER}@${POD_HOST}:${REMOTE_PATH}" \
+  "${POD_USER}@${POD_HOST}:${REMOTE_DIR}" \
   "$LOCAL_PATH"
 
 echo "✅ Download complete"

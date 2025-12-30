@@ -48,6 +48,20 @@ END=$(date +%s)
 echo "[$(ts)] ✅ STEP 3 completed in $((END - START)) sec"
 
 # ------------------------------------------------------------
+# STEP 4 — COMPRESS OUTPUTS
+# ------------------------------------------------------------
+echo ""
+echo "[$(ts)] ▶ STEP 4/4: Compressing outputs"
+START=$(date +%s)
+
+chmod +x compress_output.sh
+./compress_output.sh
+
+END=$(date +%s)
+echo "[$(ts)] ✅ STEP 4 completed in $((END - START)) sec"
+echo "[$(ts)] 📦 outputs.tar.gz created"
+
+# ------------------------------------------------------------
 # DONE
 # ------------------------------------------------------------
 echo ""
@@ -59,4 +73,6 @@ echo "📁 outputs/"
 echo "   - raw_transcript.json"
 echo "   - refined_transcript.json"
 echo "   - raw_vs_refined.diff.txt"
+echo "📦 Archive:"
+echo "   - outputs.tar.gz"
 echo "============================================================"

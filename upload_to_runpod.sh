@@ -40,6 +40,7 @@ FILES=(
   "02_transcribe_clips.py"
   "03_postprocess_rules.py"
   "run_transcription.sh"
+  "compress_output.sh"
   "runpod_health_check.sh"
   "patch.sh"
 )
